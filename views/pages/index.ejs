@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<% include ../partials/head %>
+</head>
+<body class="container">
+
+	<header>
+		<% include ../partials/header %>
+	</header>
+
+	<main>
+		<table id="items">
+			<tr>
+				<th>Item #</th>
+				<th>Prob(%)</th>
+				<th>Stock</th>
+			</tr>
+		</table>
+		<br>
+		<div style="text-align: center">
+			<button id="configuration_spawn_button" type="button" class="btn btn-default" onclick="spawn_configuration()">Reconfigure</button>
+		</div>
+		<br>
+		<form id="configure">
+			<div id="num_item_select" style="text-align: center;">
+
+			</div>
+			<br>
+			<table id="item_configuration">
+
+			</table>
+			<br>
+		</form>
+		<div style="text-align: center" id="submit_div">
+
+		</div>
+	</main>
+
+	<footer>
+		<% include ../partials/footer %>
+	</footer>
+	<script>
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                var table = document.getElementById("items");
+                var myObj = JSON.parse(this.responseText);
+                //console.log(myObj)
+                for(var key in myObj){
+                    if(key!="num_elements"){
+                        //console.log(key);
+                        //console.log(myObj[key].recipe_link);
+                        var row_number = table.rows.length;
+                        var row = table.insertRow(row_number);
+                        var cell1 = row.insertCell(0);
+                        var cell2 = row.insertCell(1);
+                        var cell3 = row.insertCell(2);
+                        cell1.innerHTML = key;
+                        cell2.innerHTML = myObj[key]["prob"];
+                        cell3.innerHTML = myObj[key]["stock"];
+                    }
+                }
+            }
+        };
+        xmlhttp.open("GET", "data.json", true);
+        xmlhttp.send();
+
+
+
+        function spawn_configuration(){
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    var table = document.getElementById("item_configuration");
+                    table.innerHTML="" +
+						"<tr>" +
+                        	"<th>Item #</th>" +
+                        	"<th>Prob(%)</th>" +
+                        	"<th>Stock</th>" +
+						"</tr>";
+                    var myObj = JSON.parse(this.responseText);
+                    //console.log(myObj)
+					var i=1;
+                    for(var key in myObj){
+                        if(key!="num_elements"){
+                            //console.log(key);
+                            //console.log(myObj[key].recipe_link);
+                            var row_number = table.rows.length;
+                            var row = table.insertRow(row_number);
+                            var cell1 = row.insertCell(0);
+                            var cell2 = row.insertCell(1);
+                            var cell3 = row.insertCell(2);
+                            cell1.innerHTML = key;
+                            cell2.innerHTML = "<input type=\"number\" step=\"0.1\" value=\""+Number(myObj[key]["prob"])+"\" id=\"prob_"+i+"\" style=\"width: 50px; text-align: right;\">";
+                            cell3.innerHTML = "<input type=\"number\" step=\"1\" value=\""+Number(myObj[key]["stock"])+"\" id=\"stock_"+i+"\" style=\"width: 50px; text-align: right;\">";
+                            i++;
+                        }
+                        else{
+                            num_elements = Number(myObj[key]);
+						}
+                    }
+                    var configuration_form = document.getElementById("num_item_select");
+                    configuration_form.innerHTML = "" +
+                        "<label for=\"num_items\">Number of items:</label>" +
+                        "<select id=\"num_elements\">" +
+                        "<option value=\"4\">4</option>" +
+                        "<option value=\"6\">6</option>" +
+                        "<option value=\"12\">12</option>" +
+                        "</select>";
+                    var num_elem_select = document.getElementById("num_elements");
+                    num_elem_select.value=num_elements;
+
+                    num_elem_select.onchange=function() {
+                        table.innerHTML="" +
+                            "<tr>" +
+                            	"<th>Item #</th>" +
+                            	"<th>Prob(%)</th>" +
+                            	"<th>Stock</th>" +
+                            "</tr>";
+
+                        var num_elements = num_elem_select[num_elem_select.selectedIndex].value;
+
+                        for(var i=1;i<=num_elements;i++){
+                            var row_number = table.rows.length;
+                            var row = table.insertRow(row_number);
+                            var cell1 = row.insertCell(0);
+                            var cell2 = row.insertCell(1);
+                            var cell3 = row.insertCell(2);
+                            cell1.innerHTML = i;
+                            cell2.innerHTML = "<input type=\"number\" step=\"0.1\" value=\"0.0\" id=\"prob_"+i+"\" style=\"width: 50px; text-align: right;\">";
+                            cell3.innerHTML = "<input type=\"number\" step=\"1\" value=\"0\" id=\"stock_"+i+"\" style=\"width: 50px; text-align: right;\">";
+                        }
+
+
+                    }
+                    var submit_div = document.getElementById("submit_div");
+                    submit_div.innerHTML="<button id=\"configuration_spawn_button\" type=\"button\" class=\"btn btn-default\" onclick=\"submit()\">Submit</button>"
+                }
+            };
+            xmlhttp.open("GET", "data.json", true);
+            xmlhttp.send();
+        }
+        function submit() {
+            var num_elem_select = document.getElementById("num_elements");
+            var num_elements = num_elem_select[num_elem_select.selectedIndex].value;
+            var one_hundred = 0;
+            var increment = 0;
+            var stock = 0;
+            for (var i=1;i<=num_elements;i++) {
+                increment = Number(document.getElementById("prob_"+i).value);
+                stock = Number(document.getElementById("stock_"+i).value);
+                if(increment<0){
+                    alert("Check your numbers, probability must be >=0 in all items!");
+                    return;
+				}
+				else if(increment>100){
+                    alert("Check your numbers, probability must be <=100 in all items!");
+                    return;
+				}
+				else if(stock<0){
+                    alert("Check your numbers, stock must be >=0 in all items!");
+                    return;
+				}
+                one_hundred += increment;
+            }
+            if(one_hundred!=100){
+                alert("Check your numbers, probability sum must be 100!");
+                return;
+			}
+			console.log("success");
+        }
+	</script>
+</body>
+</html>
