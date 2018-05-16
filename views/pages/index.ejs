@@ -18,6 +18,10 @@
 			</tr>
 		</table>
 		<br>
+		<table id="color_table">
+
+		</table>
+		<br>
 		<div style="text-align: center">
 			<button id="configuration_spawn_button" type="button" class="btn btn-default" onclick="spawn_configuration()">Reconfigure</button>
 		</div>
@@ -31,6 +35,9 @@
 
 			</table>
 			<br>
+			<table id="color_configuration">
+
+			</table>
 		</form>
 		<div style="text-align: center" id="submit_div">
 
@@ -41,64 +48,70 @@
 		<% include ../partials/footer %>
 	</footer>
 	<script>
-        var xmlhttp = new XMLHttpRequest();
-        xmlhttp.onreadystatechange = function() {
+        var item_request = new XMLHttpRequest();
+        var config_request = new XMLHttpRequest();
+        item_request.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
                 var table = document.getElementById("items");
                 var myObj = JSON.parse(this.responseText);
-                //console.log(myObj)
+                var total_stock = 0;
                 for(var key in myObj){
-                    if(key!="num_elements"){
-                        //console.log(key);
-                        //console.log(myObj[key].recipe_link);
-                        var row_number = table.rows.length;
-                        var row = table.insertRow(row_number);
-                        var cell1 = row.insertCell(0);
-                        var cell2 = row.insertCell(1);
-                        var cell3 = row.insertCell(2);
-                        cell1.innerHTML = key;
-                        cell2.innerHTML = myObj[key]["prob"];
-                        cell3.innerHTML = myObj[key]["stock"];
-                    }
+                    total_stock += Number(myObj[key]);
+                }
+                for(var key in myObj){
+					var row_number = table.rows.length;
+					var row = table.insertRow(row_number);
+					var cell1 = row.insertCell(0);
+					var cell2 = row.insertCell(1);
+					var cell3 = row.insertCell(2);
+					cell1.innerHTML = key;
+					cell2.innerHTML = "" + (100*Number(myObj[key])/total_stock).toFixed(1);
+					cell3.innerHTML = myObj[key];
                 }
             }
         };
-        xmlhttp.open("GET", "data.json", true);
-        xmlhttp.send();
-
-
+        config_request.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                var table = document.getElementById("color_table");
+                var myObj = JSON.parse(this.responseText);
+                var row = table.insertRow(0);
+                var cell1 = row.insertCell(0);
+                cell1.innerHTML = "Spinning color";
+                cell1.style.backgroundColor =rgb2hex(myObj["rgb_spinning"]["r"],myObj["rgb_spinning"]["g"],myObj["rgb_spinning"]["b"]);
+                cell1.style.textAlign="center";
+                var row = table.insertRow(1);
+                var cell1 = row.insertCell(0);
+                cell1.innerHTML = "Prize color";
+                cell1.style.backgroundColor=rgb2hex(myObj["rgb_prize"]["r"],myObj["rgb_prize"]["g"],myObj["rgb_prize"]["b"]);
+                cell1.style.textAlign="center";
+            }
+        };
+        item_request.open("GET", "data.json", true);
+        item_request.send();
+        config_request.open("GET", "configuration.json", true);
+        config_request.send();
 
         function spawn_configuration(){
-            var xmlhttp = new XMLHttpRequest();
-            xmlhttp.onreadystatechange = function() {
+            var item_request = new XMLHttpRequest();
+            var config_request = new XMLHttpRequest();
+            item_request.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
                     var table = document.getElementById("item_configuration");
                     table.innerHTML="" +
 						"<tr>" +
                         	"<th>Item #</th>" +
-                        	"<th>Prob(%)</th>" +
                         	"<th>Stock</th>" +
 						"</tr>";
                     var myObj = JSON.parse(this.responseText);
-                    //console.log(myObj)
 					var i=1;
                     for(var key in myObj){
-                        if(key!="num_elements"){
-                            //console.log(key);
-                            //console.log(myObj[key].recipe_link);
-                            var row_number = table.rows.length;
-                            var row = table.insertRow(row_number);
-                            var cell1 = row.insertCell(0);
-                            var cell2 = row.insertCell(1);
-                            var cell3 = row.insertCell(2);
-                            cell1.innerHTML = key;
-                            cell2.innerHTML = "<input type=\"number\" step=\"0.1\" value=\""+Number(myObj[key]["prob"])+"\" id=\"prob_"+i+"\" style=\"width: 50px; text-align: right;\">";
-                            cell3.innerHTML = "<input type=\"number\" step=\"1\" value=\""+Number(myObj[key]["stock"])+"\" id=\"stock_"+i+"\" style=\"width: 50px; text-align: right;\">";
-                            i++;
-                        }
-                        else{
-                            num_elements = Number(myObj[key]);
-						}
+						var row_number = table.rows.length;
+						var row = table.insertRow(row_number);
+						var cell1 = row.insertCell(0);
+						var cell2 = row.insertCell(1);
+						cell1.innerHTML = key;
+						cell2.innerHTML = "<input type=\"number\" step=\"1\" value=\""+Number(myObj[key])+"\" id=\"stock_"+i+"\" style=\"width: 50px; text-align: right;\">";
+						i++;
                     }
                     var configuration_form = document.getElementById("num_item_select");
                     configuration_form.innerHTML = "" +
@@ -109,13 +122,12 @@
                         "<option value=\"12\">12</option>" +
                         "</select>";
                     var num_elem_select = document.getElementById("num_elements");
-                    num_elem_select.value=num_elements;
+                    num_elem_select.value=""+(i-1);
 
                     num_elem_select.onchange=function() {
                         table.innerHTML="" +
                             "<tr>" +
                             	"<th>Item #</th>" +
-                            	"<th>Prob(%)</th>" +
                             	"<th>Stock</th>" +
                             "</tr>";
 
@@ -126,49 +138,44 @@
                             var row = table.insertRow(row_number);
                             var cell1 = row.insertCell(0);
                             var cell2 = row.insertCell(1);
-                            var cell3 = row.insertCell(2);
                             cell1.innerHTML = i;
-                            cell2.innerHTML = "<input type=\"number\" step=\"0.1\" value=\"0.0\" id=\"prob_"+i+"\" style=\"width: 50px; text-align: right;\">";
-                            cell3.innerHTML = "<input type=\"number\" step=\"1\" value=\"0\" id=\"stock_"+i+"\" style=\"width: 50px; text-align: right;\">";
+                            cell2.innerHTML = "<input type=\"number\" step=\"1\" value=\"0\" id=\"stock_"+i+"\" style=\"width: 50px; text-align: right;\">";
                         }
-
-
                     }
                     var submit_div = document.getElementById("submit_div");
                     submit_div.innerHTML="<button id=\"configuration_spawn_button\" type=\"button\" class=\"btn btn-default\" onclick=\"submit()\">Submit</button>"
                 }
             };
-            xmlhttp.open("GET", "data.json", true);
-            xmlhttp.send();
+            config_request.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    var table = document.getElementById("color_configuration");
+                    table.innerHTML="";
+                    var myObj = JSON.parse(this.responseText);
+                    var row = table.insertRow(0);
+                    var cell1 = row.insertCell(0);
+                    var cell2 = row.insertCell(1);
+                    cell1.innerHTML = "Spinning color";
+                    cell1.style.textAlign="left";
+                    cell2.innerHTML="<input type=\"color\" name=\"favcolor\" value=\""+rgb2hex(myObj["rgb_spinning"]["r"],myObj["rgb_spinning"]["g"],myObj["rgb_spinning"]["b"])+"\">";
+                    var row = table.insertRow(1);
+                    var cell1 = row.insertCell(0);
+                    var cell2 = row.insertCell(1);
+                    cell1.innerHTML = "Prize color";
+                    cell1.style.textAlign="left";
+                    cell2.innerHTML="<input type=\"color\" name=\"favcolor\" value=\""+rgb2hex(myObj["rgb_prize"]["r"],myObj["rgb_prize"]["g"],myObj["rgb_prize"]["b"])+"\">";
+                }
+            };
+            item_request.open("GET", "data.json", true);
+            item_request.send();
+            config_request.open("GET", "configuration.json", true);
+            config_request.send();
         }
         function submit() {
-            var num_elem_select = document.getElementById("num_elements");
-            var num_elements = num_elem_select[num_elem_select.selectedIndex].value;
-            var one_hundred = 0;
-            var increment = 0;
-            var stock = 0;
-            for (var i=1;i<=num_elements;i++) {
-                increment = Number(document.getElementById("prob_"+i).value);
-                stock = Number(document.getElementById("stock_"+i).value);
-                if(increment<0){
-                    alert("Check your numbers, probability must be >=0 in all items!");
-                    return;
-				}
-				else if(increment>100){
-                    alert("Check your numbers, probability must be <=100 in all items!");
-                    return;
-				}
-				else if(stock<0){
-                    alert("Check your numbers, stock must be >=0 in all items!");
-                    return;
-				}
-                one_hundred += increment;
-            }
-            if(one_hundred!=100){
-                alert("Check your numbers, probability sum must be 100!");
-                return;
-			}
-			console.log("success");
+
+        }
+        function rgb2hex(red, green, blue) {
+            var rgb = blue | (green << 8) | (red << 16);
+            return '#' + (0x1000000 + rgb).toString(16).slice(1)
         }
 	</script>
 </body>

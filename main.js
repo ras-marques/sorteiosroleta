@@ -28,8 +28,15 @@ app.get('/data.json', function(req, res) {
     fs.readFile('data.json', 'utf8', function (err, data) {
         if (err) throw err;
         item_data = JSON.parse(data);
-        //console.log(item_data);
         res.json(item_data);
+    });
+});
+app.get('/configuration.json', function(req, res) {
+    var config_data;
+    fs.readFile('configuration.json', 'utf8', function (err, data) {
+        if (err) throw err;
+        config_data = JSON.parse(data);
+        res.json(config_data);
     });
 });
 
