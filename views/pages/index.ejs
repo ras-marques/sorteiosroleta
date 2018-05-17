@@ -26,11 +26,11 @@
 			<button id="configuration_spawn_button" type="button" class="btn btn-default" onclick="spawn_configuration()">Reconfigure</button>
 		</div>
 		<br>
-		<form id="configure">
-			<div id="num_item_select" style="text-align: center;">
+		<div id="num_item_select" style="text-align: center;">
 
-			</div>
-			<br>
+		</div>
+		<br>
+		<form id="configure">
 			<table id="item_configuration">
 
 			</table>
@@ -110,7 +110,7 @@
 						var cell1 = row.insertCell(0);
 						var cell2 = row.insertCell(1);
 						cell1.innerHTML = key;
-						cell2.innerHTML = "<input type=\"number\" step=\"1\" value=\""+Number(myObj[key])+"\" id=\"stock_"+i+"\" style=\"width: 50px; text-align: right;\">";
+						cell2.innerHTML = "<input type=\"number\" step=\"1\" value=\""+Number(myObj[key])+"\" name=\"stock_"+i+"\" id=\"stock_"+i+"\" style=\"width: 50px; text-align: right;\">";
 						i++;
                     }
                     var configuration_form = document.getElementById("num_item_select");
@@ -156,13 +156,13 @@
                     var cell2 = row.insertCell(1);
                     cell1.innerHTML = "Spinning color";
                     cell1.style.textAlign="left";
-                    cell2.innerHTML="<input type=\"color\" name=\"favcolor\" value=\""+rgb2hex(myObj["rgb_spinning"]["r"],myObj["rgb_spinning"]["g"],myObj["rgb_spinning"]["b"])+"\">";
+                    cell2.innerHTML="<input type=\"color\" name=\"spinning_color\" value=\""+rgb2hex(myObj["rgb_spinning"]["r"],myObj["rgb_spinning"]["g"],myObj["rgb_spinning"]["b"])+"\">";
                     var row = table.insertRow(1);
                     var cell1 = row.insertCell(0);
                     var cell2 = row.insertCell(1);
                     cell1.innerHTML = "Prize color";
                     cell1.style.textAlign="left";
-                    cell2.innerHTML="<input type=\"color\" name=\"favcolor\" value=\""+rgb2hex(myObj["rgb_prize"]["r"],myObj["rgb_prize"]["g"],myObj["rgb_prize"]["b"])+"\">";
+                    cell2.innerHTML="<input type=\"color\" name=\"prize_color\" value=\""+rgb2hex(myObj["rgb_prize"]["r"],myObj["rgb_prize"]["g"],myObj["rgb_prize"]["b"])+"\">";
                 }
             };
             item_request.open("GET", "data.json", true);
@@ -171,7 +171,20 @@
             config_request.send();
         }
         function submit() {
-
+            var submit_request=new XMLHttpRequest();
+            var submit_url = "update_items_and_colors";
+            var formData = new FormData(document.getElementById("configure"));
+            var formData_objectified = {};
+            for (var pair of formData.entries()) {
+                formData_objectified[pair[0].toString()] = pair[1];
+            }
+            //console.log(formData_objectified);
+            var myJSON = JSON.stringify(formData_objectified);
+            //console.log(myJSON);
+            submit_request.open("POST",submit_url,true);
+            submit_request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            submit_request.send(myJSON);
+			location.reload()
         }
         function rgb2hex(red, green, blue) {
             var rgb = blue | (green << 8) | (red << 16);

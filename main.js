@@ -18,11 +18,6 @@ app.get('/', function(req, res) {
     res.render('pages/index');
 });
 
-// add recipes page
-app.get('/add', function(req, res) {
-    res.render('pages/add');
-});
-
 app.get('/data.json', function(req, res) {
     var item_data;
     fs.readFile('data.json', 'utf8', function (err, data) {
@@ -40,11 +35,6 @@ app.get('/configuration.json', function(req, res) {
     });
 });
 
-// all recipes page
-app.get('/show_all', function(req, res) {
-    res.render('pages/show_all');
-});
-
 function inArray(elem,array_to_check){
     var count=array_to_check.length;
     for(var i=0;i<count;i++){
@@ -53,66 +43,44 @@ function inArray(elem,array_to_check){
     return false;
 }
 
-app.post('/search_result', function(req, res) {
-    var checked_ingredients_json = req.body;
-    //console.log(checked_ingredients_json)
-    checked_ingredients_array=[];
-    for(var ingredient in checked_ingredients_json){
-        checked_ingredients_array.push(ingredient);
-    }
-    //console.log(checked_ingredients_array)
-
-    var recipes_to_send = {}
-    var fs = require('fs');
-    fs.readFile('recipes.json', 'utf8', function (err, data) {
-        if (err) throw err;
-        var recipes_list = JSON.parse(data);
-        for (var recipe in recipes_list) {
-            var recipe_valid = true;
-            for (var i = 0; i < recipes_list[recipe]["ingredients"].length; i++) {
-                if (!inArray(recipes_list[recipe]["ingredients"][i], checked_ingredients_array)) {
-                    recipe_valid = false
-                }
-            }
-            if (recipe_valid) {
-                recipes_to_send[recipe]={"recipe_link": recipes_list[recipe]["recipe_link"]}
-            }
-        }
-        //var myJSON = JSON.stringify(recipes_to_send);
-        //console.log(recipes_to_send);
-        res.json(recipes_to_send);
-        //res.render('pages/search_result');
-    });
-});
+function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
 
 // add recipes page
-app.post('/add', function(req, res) {
+app.post('/update_items_and_colors', function(req, res) {
     var data = req.body;
-    var new_recipe_name = data.recipe_name;
-    var new_recipe_link = data.recipe_link;
-    var new_recipe_ingredients = [];
+    var spinning_color = data.spinning_color;
+    var prize_color = data.prize_color;
+    var stock = {};
+    var colors = {};
+    var i=1;
     for(var key in data){
-        if(key != "recipe_name" && key != "recipe_link"){
-            new_recipe_ingredients.push(key);
+        if(key.includes("stock")){
+            stock[i]=data[key];
         }
+        i++;
     }
+    colors["rgb_spinning"]={"r":""+hexToRgb(spinning_color).r,"g":""+hexToRgb(spinning_color).g,"b":""+hexToRgb(spinning_color).b};
+    colors["rgb_prize"]={"r":""+hexToRgb(prize_color).r,"g":""+hexToRgb(prize_color).g,"b":""+hexToRgb(prize_color).b};
 
     var fs = require('fs');
-    var recipes;
-    fs.readFile('recipes.json', 'utf8', function (err, data) {
-        if (err) throw err;
-        recipes = JSON.parse(data);
-
-        recipes[new_recipe_name] = {"recipe_link": new_recipe_link, "ingredients": new_recipe_ingredients}
-        var myJSON = JSON.stringify(recipes);
-
-        fs.writeFile("recipes.json", myJSON, function(err) {
-            if (err) {
-                console.log(err);
-            }
-        });
-
-        //console.log(recipes);
+    var myJSON = JSON.stringify(stock);
+    fs.writeFile("data.json", myJSON, function(err) {
+        if (err) {
+            console.log(err);
+        }
+    });
+    var myJSON = JSON.stringify(colors);
+    fs.writeFile("configuration.json", myJSON, function(err) {
+        if (err) {
+            console.log(err);
+        }
     });
 });
 
