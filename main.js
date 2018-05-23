@@ -5,6 +5,18 @@ var app = express();
 const bodyParser = require("body-parser");
 var fs = require('fs');
 
+var Gpio = require('onoff').Gpio;
+var LEDstrip=[];
+LEDstrip[0] = new Gpio(4, 'out');
+LEDstrip[1] = new Gpio(14, 'out');
+LEDstrip[2] = new Gpio(15, 'out');
+LEDstrip[3] = new Gpio(17, 'out');
+LEDstrip[4] = new Gpio(18, 'out');
+LEDstrip[5] = new Gpio(27, 'out');
+LEDstrip[6] = new Gpio(22, 'out');
+LEDstrip[7] = new Gpio(23, 'out');
+LEDstrip[8] = new Gpio(24, 'out');
+
 // set the view engine to ejs
 app.set('view engine', 'ejs');
 
@@ -34,6 +46,80 @@ app.get('/configuration.json', function(req, res) {
         res.json(config_data);
     });
 });
+
+app.post('/run',  function(req, res) {
+    var result = Math.floor((Math.random() * 8) + 1);
+    console.log(result);
+    for(var number_of_rolls=0;number_of_rolls<10;number_of_rolls++){
+        for(var index_roll=0;index_roll<9;index_roll++){
+            allLEDoff();
+            LEDstrip[index_roll].writeSync(1);
+            sleep(50);
+        }
+    }
+    var sleep_increment=10;
+    for(var number_of_rolls=0;number_of_rolls<3;number_of_rolls++){
+        for(var index_roll=0;index_roll<9;index_roll++){
+            allLEDoff();
+            LEDstrip[index_roll].writeSync(1);
+            sleep(sleep_increment+50);
+            sleep_increment+=10;
+        }
+    }
+    for(var index_roll=0;index_roll<result;index_roll++){
+        allLEDoff();
+        LEDstrip[index_roll].writeSync(1);
+        sleep(sleep_increment+50);
+    }
+});
+
+function sleep(milliseconds) {
+    var start = new Date().getTime();
+    for (var i = 0; i < 1e7; i++) {
+        if ((new Date().getTime() - start) > milliseconds){
+            break;
+        }
+    }
+}
+
+function allLEDoff(){
+    LEDstrip[0].writeSync(0);
+    LEDstrip[1].writeSync(0);
+    LEDstrip[2].writeSync(0);
+    LEDstrip[3].writeSync(0);
+    LEDstrip[4].writeSync(0);
+    LEDstrip[5].writeSync(0);
+    LEDstrip[6].writeSync(0);
+    LEDstrip[7].writeSync(0);
+    LEDstrip[8].writeSync(0);
+}
+
+function rollLED() { //function to start blinking
+    allLEDoff();
+    //console.log(index_roll);
+    LEDstrip[index_roll].writeSync(1);
+    if(index_roll<8){
+        index_roll++;
+    }
+    else{
+        index_roll=0;
+    }
+}
+
+function endRoll() { //function to stop blinking
+    console.log("stopped_interval");
+    clearInterval(rollInterval); // Stop blink intervals
+    //LED.writeSync(0); // Turn LED off
+    LEDstrip[0].unexport();
+    LEDstrip[1].unexport();
+    LEDstrip[2].unexport();
+    LEDstrip[3].unexport();
+    LEDstrip[4].unexport();
+    LEDstrip[5].unexport();
+    LEDstrip[6].unexport();
+    LEDstrip[7].unexport();
+    LEDstrip[8].unexport();
+}
 
 function inArray(elem,array_to_check){
     var count=array_to_check.length;
